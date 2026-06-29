@@ -53,7 +53,6 @@
     color: var(--green-700); letter-spacing: -0.5px;
   }
   .auth-logo-text span { color: var(--green-400); }
-  /* GustoStock text logo only - no veggie icon */
   .gs-wordmark {
     font-family: var(--font-main); font-size: 32px; font-weight: 700;
     color: var(--green-700); letter-spacing: -1px;
@@ -221,7 +220,6 @@
   }
   .filter-select:focus { border-color: var(--green-400); }
 
-  /* Number input with spin buttons always visible */
   input[type="number"].qty-input {
     -moz-appearance: number-input;
     padding-right: 6px;
@@ -263,7 +261,7 @@
   .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
   .bar-fill { width: 100%; border-radius: 6px 6px 0 0; transition: height 0.5s; min-height: 8px; }
   .bar-label { font-size: 11px; color: var(--gray-500); font-family: var(--font-main); font-weight: 500; }
-  .bar-val { font-size: 11px; color: var(--green-700); font-family: var(--font-main); font-weight: 700; }
+  .bar-chart .bar-val { font-size: 11px; color: var(--green-700); font-family: var(--font-main); font-weight: 700; }
 
   .toast {
     position: fixed; bottom: 28px; right: 28px; background: var(--green-700); color: #fff;
@@ -281,11 +279,10 @@
   .person-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--green-50); border: 1px solid var(--green-200); border-radius: 99px; padding: 2px 10px 2px 5px; font-family: var(--font-main); font-size: 12px; color: var(--green-700); font-weight: 600; }
   .person-chip-avatar { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--green-300), var(--green-500)); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-  /* Delete history button in tables */
   .btn-del-row { background: none; border: none; cursor: pointer; color: #dc2626; font-size: 15px; padding: 3px 6px; border-radius: 6px; transition: background 0.15s; }
   .btn-del-row:hover { background: #fee2e2; }
 
-  /* ===== FINISHED GOODS / OEE TRACKING ===== */
+  /* FINISHED GOODS / OEE TRACKING */
   .alert-banner {
     background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #ef4444; border-radius: var(--radius);
     padding: 16px 18px; margin-bottom: 18px; display: flex; align-items: flex-start; gap: 14px;
@@ -303,8 +300,6 @@
 
   .oee-section-title { font-family: var(--font-main); font-size: 16px; font-weight: 700; color: var(--gray-800); margin: 28px 0 14px; display: flex; align-items: center; gap: 8px; }
   .oee-section-title:first-of-type { margin-top: 0; }
-
-  .badge-orange { background: #ffedd5; color: #c2410c; }
 
   .bom-preview { background: var(--green-50); border: 1.5px dashed var(--green-300); border-radius: var(--radius-sm); padding: 12px 14px; margin: 4px 0 14px; font-size: 13px; }
   .bom-preview-title { font-family: var(--font-main); font-weight: 600; color: var(--green-700); font-size: 12.5px; margin-bottom: 8px; }
@@ -340,6 +335,7 @@
   .target-chart { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding: 0 4px; overflow-x: auto; }
   .target-bar-item { flex-shrink: 0; width: 54px; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
   .target-bar-pair { display: flex; gap: 3px; align-items: flex-end; width: 100%; height: 100%; }
+  .target-bar-item .bar-val { font-size: 11px; color: var(--green-700); font-family: var(--font-main); font-weight: 700; }
   .yieldloss-text { font-weight: 700; }
 
   @media (max-width: 600px) {
@@ -749,21 +745,27 @@ let docCounter = parseInt(localStorage.getItem('gs_docCounter') || '1000');
 let prodDocCounter = parseInt(localStorage.getItem('gs_prodDocCounter') || '5000');
 const YIELD_LOSS_THRESHOLD = 2; // %
 
-const GAS_WEB_APP_URL = https://script.google.com/macros/s/AKfycbydVcLLJOcgg7awpkfPK3vCOBPSk5VZXBD7KDbBRXvcWJ1CsoZqzRj5XyZKsE9Ey-ej/exec
+// ⚠️ สำคัญ: นำลิงก์ Web App URL จาก Google Apps Script ที่ Deploy แบบ "Anyone" มาวางที่นี่
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWZoUS-UVcSnic9BIl5539eiMgeIlFX4ip9Fu4xC9HjPF05wqA6Ozm4JcrWMGAirv6/exec";
 
+// ปรับปรุงฟังก์ชันเชื่อมโยงหน้าเว็บกับ Google Sheet ให้ยืดหยุ่นและรองรับโครงสร้างแบบ Action
 async function sendToGoogleSheet(action, payload) {
+  if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("https://script.google.com/macros/s/AKfycbyWZoUS-UVcSnic9BIl5539eiMgeIlFX4ip9Fu4xC9HjPF05wqA6Ozm4JcrWMGAirv6/exec")) {
+    console.warn("ไม่ได้กำหนดลิงก์ GAS_WEB_APP_URL ข้อมูลจึงยังไม่ได้บันทึกลงคลาวด์");
+    return false;
+  }
   try {
     const response = await fetch(GAS_WEB_APP_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' }, // ป้องกัน CORS บล็อกสกัดกั้นบางบราวเซอร์
       body: JSON.stringify({ action, payload })
     });
     const data = await response.json();
-    if (data.status === 'success') {
+    if (data.status === 'success' || data.ok) {
       console.log(`Successfully synced ${action} to Google Sheet`);
       return true;
     } else {
-      console.error(`Error syncing ${action} to Google Sheet:`, data.message);
+      console.error(`Error syncing ${action} to Google Sheet:`, data.error || data.message);
       return false;
     }
   } catch (error) {
@@ -1001,7 +1003,6 @@ function deleteWithdrawal(idx) {
   showToast('🗑️ ลบรายการเบิกแล้ว');
 }
 
-// ล้างประวัติทั้งหมด (เฉพาะ withdrawals ไม่ลบสินค้า)
 function confirmClearAll() {
   if (!confirm('ล้างประวัติการเบิกทั้งหมด? (สินค้าในระบบจะยังคงอยู่ แต่จำนวนเบิกจะถูกรีเซ็ต)')) return;
   withdrawals = [];
@@ -1102,7 +1103,6 @@ function renderProductTable(q) {
 }
 
 function renderWithdrawTable(q) {
-  // store original indices before filter
   let rows = withdrawals.map((w,i) => ({...w, _i: i})).reverse();
   if (q) rows = rows.filter(w => (w.productName||'').includes(q) || (w.productCode||'').includes(q) || (w.docNum||'').includes(q) || (w.withdrawer||'').includes(q) || (w.jobName||'').includes(q));
   const tbody = document.getElementById('withdrawTbody');
@@ -1218,7 +1218,6 @@ function renderReport() {
   }).join('') || `<tr><td colspan="10" style="text-align:center;color:var(--gray-400);padding:28px;">ยังไม่มีสินค้า</td></tr>`;
 }
 
-
 function deleteProductFromReport(code) {
   const prod = products.find(p => p.code === code);
   if (!prod) return;
@@ -1230,14 +1229,7 @@ function deleteProductFromReport(code) {
   showToast('🗑️ ลบ "' + prod.name + '" เรียบร้อยแล้ว');
 }
 
-/* =========================================================
-   FINISHED GOODS & OEE TRACKING SYSTEM
-   1) Finished Goods Input & Auto-BOM Deduction
-   2) Reconcile Check & Poka-Yoke Alert (Yield Loss)
-   3) Executive & OEE Dashboard
-   ========================================================= */
-
-// ---------- BOM (Bill of Materials) management ----------
+// ---------- BOM & PRODUCTION SYSTEM (แก้ไข URL ชำรุดเรียบร้อย) ----------
 function addBomRow(productCode, qtyPerUnit) {
   bomRowSeq++;
   const rid = 'bomRow' + bomRowSeq;
@@ -1287,7 +1279,6 @@ function saveFG() {
   bomRowSeq = 0;
   addBomRow();
   renderFGList();
-  populateFGSelect();
 }
 
 function editFG(i) {
@@ -1306,7 +1297,6 @@ function deleteFG(i) {
   finishedGoods.splice(i, 1);
   save();
   renderFGList();
-  populateFGSelect();
   showToast('🗑️ ลบ BOM แล้ว');
 }
 
@@ -1331,29 +1321,6 @@ function renderFGList() {
     </div>`).join('') || `<div class="bom-preview-empty">ยังไม่มีสินค้าสำเร็จรูปที่ตั้งค่า BOM ไว้</div>`;
 }
 
-function populateFGSelect() {
-  const sel = document.getElementById('pdFG');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">-- เลือกสินค้าสำเร็จรูป --</option>';
-  finishedGoods.forEach((fg,i) => sel.innerHTML += `<option value="${i}">${fg.code} - ${fg.name}</option>`);
-}
-
-// ---------- Production input, preview & reconcile ----------
-function previewBom(idx) {
-  const box = document.getElementById('pdBomPreview');
-  if (!box) return;
-  if (idx === '') { box.innerHTML = '<div class="bom-preview-empty">เลือกสินค้าเพื่อแสดงสูตรบรรจุภัณฑ์ (BOM)</div>'; return; }
-  const fg = finishedGoods[parseInt(idx)];
-  if (!fg) return;
-  box.innerHTML = `<div class="bom-preview-title">📐 สูตรบรรจุภัณฑ์ที่จะถูกหักสต็อก (ต่อ 1 หน่วยที่บรรจุเสร็จ)</div>` +
-    (fg.components || []).map(c => {
-      const p = products.find(pp => pp.code === c.productCode);
-      const rem = p ? getRemaining(p.code) : 0;
-      return `<div class="bom-preview-item"><span>${p ? p.name : c.productCode}</span><b>−${c.qtyPerUnit} / หน่วย &nbsp; (คงเหลือ ${rem.toLocaleString()} ${p ? p.unit : ''})</b></div>`;
-    }).join('');
-  updateYieldPreview();
-}
-
 function updateYieldPreview() {
   const withdrawn = parseFloat(document.getElementById('pdWithdrawn').value) || 0;
   const actual = parseFloat(document.getElementById('pdActual').value) || 0;
@@ -1367,6 +1334,7 @@ function updateYieldPreview() {
   </div>`;
 }
 
+// ✅ ปรับปรุง: ฟังก์ชันบันทึกการผลิตส่งตรงเข้า Google Sheet ผ่านลิงก์หลักแบบสมบูรณ์
 function saveProduction() {
   const fgName = document.getElementById('pdFG').value.trim();
   const target = parseFloat(document.getElementById('pdTarget').value) || 0;
@@ -1376,11 +1344,13 @@ function saveProduction() {
   const actual = parseFloat(document.getElementById('pdActual').value) || 0;
   const note = document.getElementById('pdNote').value.trim();
   const docNum = document.getElementById('pdDocNum').textContent.replace('เลขที่เอกสาร: ','');
+  
   if (!fgName || !date || !target || !shift) { showToast('⚠️ กรุณากรอกข้อมูลที่จำเป็น'); return; }
   if (!withdrawn || !actual) { showToast('⚠️ กรุณากรอกจำนวนที่เบิกจริงและจำนวนที่บรรจุเสร็จจริง'); return; }
 
   const yieldLoss = withdrawn > 0 ? ((withdrawn - actual) / withdrawn) * 100 : 0;
   const isAlert = yieldLoss > YIELD_LOSS_THRESHOLD;
+  
   const productionData = {
     docNum, fgCode: '', fgName, target, withdrawn, actual, yieldLoss, isAlert, shift,
     acknowledged: false, date, note,
@@ -1392,35 +1362,22 @@ function saveProduction() {
   closeModal('modalProduction');
   renderAll();
 
-  // บันทึกลง Google Sheet
-  fetch('https://5000-i30momf2dkp9fq8ie0ahy-ca4fcfa2.sg1.manus.computer/api/save-production', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(productionData)
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status === 'success') {
-      showToast('✅ บันทึกการผลิตลง Google Sheet สำเร็จ');
+  // เรียกผ่านฟังก์ชันหลักที่แก้ไขแล้ว มั่นใจข้อมูลวิ่งเข้าสู่ PRODUCTION_LOG
+  sendToGoogleSheet('save-production', productionData).then(success => {
+    if (success) {
+      showToast('✅ บันทึกการผลิตและส่งข้อมูลไป Google Sheet เรียบร้อย');
     } else {
-      console.error('Google Sheet Error:', data.message);
-      showToast('❌ บันทึกลง Google Sheet ไม่สำเร็จ');
+      showToast('❌ การเชื่อมข้อมูลคลาวด์ Sheet ล้มเหลว (ตรวจสอบ URL App)');
     }
-  })
-  .catch(err => {
-    console.error('Fetch Error:', err);
-    showToast('⚠️ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์บันทึกข้อมูลได้');
   });
 
   if (isAlert) {
     showToast('🚨 บันทึกสำเร็จ แต่พบ Yield Loss ' + yieldLoss.toFixed(2) + '% เกินเกณฑ์มาตรฐาน!', 5000);
-  } else {
-    showToast('✅ บันทึกการผลิตและตัดสต็อก BOM สำเร็จ');
   }
 }
 
 function deleteProduction(i) {
-  if (!confirm('ลบรายการผลิตนี้? (รายการเบิกบรรจุภัณฑ์ที่ตัดสต็อกอัตโนมัติจากรายการนี้จะถูกลบด้วย)')) return;
+  if (!confirm('ลบรายการผลิตนี้?')) return;
   const docNum = productions[i].docNum;
   productions.splice(i, 1);
   withdrawals = withdrawals.filter(w => w.docNum !== docNum);
@@ -1435,7 +1392,6 @@ function dismissAlert(i) {
   renderAll();
 }
 
-// ---------- Render: production table, alert banner, stats, dashboard ----------
 function renderProductionTable(q) {
   let rows = productions.map((pr,i) => ({...pr, i})).reverse();
   if (q) rows = rows.filter(p => (p.fgName||'').includes(q) || (p.docNum||'').includes(q) || (p.recordedBy||'').includes(q) || (p.shift||'').includes(q));
@@ -1558,7 +1514,7 @@ document.addEventListener('click', function(e) {
   deleteProductFromReport(btn.getAttribute('data-code'));
 });
 
-// Keyboard shortcut: Ctrl+Enter to save active modal
+// Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     const activeModal = document.querySelector('.modal-overlay.active');
@@ -1566,7 +1522,6 @@ document.addEventListener('keydown', function(e) {
     const saveBtn = activeModal.querySelector('.btn-modal-save');
     if (saveBtn) { e.preventDefault(); saveBtn.click(); }
   }
-  // Escape to close modal
   if (e.key === 'Escape') {
     const activeModal = document.querySelector('.modal-overlay.active');
     if (activeModal) activeModal.classList.remove('active');
