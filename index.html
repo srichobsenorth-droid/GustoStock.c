@@ -749,7 +749,7 @@ let docCounter = parseInt(localStorage.getItem('gs_docCounter') || '1000');
 let prodDocCounter = parseInt(localStorage.getItem('gs_prodDocCounter') || '5000');
 const YIELD_LOSS_THRESHOLD = 2; // %
 
-const GAS_WEB_APP_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'; // *** สำคัญ: แทนที่ด้วย URL ของ Web App ของคุณ ***
+const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxt3UYJCV77ghEy4KO334DLCuy2xPWlazWYwzBz0v1YzyUDPH2sLkMPQeaPTUMoEmGH/exec'; 
 
 async function sendToGoogleSheet(action, payload) {
   try {
